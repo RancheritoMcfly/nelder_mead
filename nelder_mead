@@ -1,0 +1,74 @@
+import numpy as np
+from pkg_resources import ContextualVersionConflict
+
+dim = 2 #dimensiones
+rango_inf, rango_sup = -50, 50 #rangos
+
+def sacar_fitness(triangulo):
+    fitness = np.apply_along_axis(np.sum, 1, triangulo**2)
+    return fitness
+
+def reflection(triangulo):
+    evalu = np.argsort(sacar_fitness(triangulo))
+    mejores = np.empty((dim,dim))
+    for i in range(dim):
+        mejores[i] = triangulo[evalu[i]]
+    m = (np.sum(mejores, axis = 0))/2 #punto medio calculo
+    r = (m * dim) - triangulo[evalu[-1]] #punto nuevo de la reflexión
+    triangulo[evalu[-1]] = r
+    return triangulo
+
+def expansion(triangulo):
+    evalu = np.argsort(sacar_fitness(triangulo))
+    mejores = np.empty((dim,dim))
+    for i in range(dim):
+        mejores[i] = triangulo[evalu[i]]
+    m = (np.sum(mejores, axis = 0))/2 #punto medio calculo
+    r = (m * dim) - triangulo[evalu[-1]] #punto nuevo de la expansion, punto de partida para la extensión
+    e = (r * 2) - m #Punto de expansión, valor del punto doblemente lejano.
+    triangulo[evalu[-1]] = e
+    return triangulo
+
+def contraction(triangulo):
+    evalu = np.argsort(sacar_fitness(triangulo))
+    mejores = np.empty((dim,dim))
+    for i in range(dim):
+        mejores[i] = triangulo[evalu[i]]
+    m = (np.sum(mejores, axis = 0))/2 #punto medio calculo
+    r = (m * dim) - triangulo[evalu[-1]] #punto nuevo de la expansion, punto de partida para la extensión
+    c = (m + r)/dim  #Punto de contraccion, valor del punto medio entre M y R.
+    triangulo[evalu[-1]] = c
+    return triangulo
+
+def shrinking(triangulo):
+    evalu = np.argsort(sacar_fitness(triangulo))
+    for i in range(len(triangulo)):
+        if (i == 0):
+            continue
+        triangulo[i] = (triangulo[evalu[0]] + triangulo[i])/2
+    return triangulo
+
+triangulo = np.random.uniform(rango_inf, rango_sup, size=(dim+1, dim))
+
+while(True):
+    tri_refl = reflection(triangulo)
+    tri_expa = expansion(triangulo)
+    tri_cont = contraction(triangulo)
+    tri_shri = shrinking(triangulo)
+    
+    if(np.sum(sacar_fitness(triangulo)) >= np.sum(sacar_fitness(tri_refl))):
+        triangulo = tri_refl
+        continue
+    elif(sacar_fitness(triangulo) >= sacar_fitness(tri_expa)):
+        triangulo = tri_expa
+        continue
+    elif(sacar_fitness(triangulo) >= sacar_fitness(tri_cont)):
+        triangulo = tri_cont
+        continue
+    elif(sacar_fitness(triangulo) >= sacar_fitness(tri_shri)):
+        triangulo = tri_shri
+        continue
+    else: 
+        break
+
+print("Los valores MAS OPTIMOS del triangulo son:", triangulo, "\n el fitness corresponde a:" ,sacar_fitness(triangulo), "\nNo se crea profe, yo sé que sólo se dice optimo, no me vaya a reprobar... porfi <3")
